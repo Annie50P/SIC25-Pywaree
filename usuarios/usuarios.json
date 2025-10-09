@@ -1,0 +1,42 @@
+{
+    "andres": {
+        "contrasena": "1234",
+        "nombre": "Andres",
+        "apellido": "Gómez",
+        "email": "andres@mail.com",
+        "edad": 35,
+        "genero": "Masculino"
+    },
+    "ana": {
+        "contrasena": "5678",
+        "nombre": "Ana",
+        "apellido": "Martínez",
+        "email": "ana.martinez@corp.com",
+        "edad": 42,
+        "genero": "Femenino"
+    },
+    "john": {
+        "contrasena": "1928",
+        "nombre": "John",
+        "apellido": "Grammaticus",
+        "email": "cabal@mail.com",
+        "edad": 35,
+        "genero": "Masculino"
+    },
+    "sven": {
+        "contrasena": "4444",
+        "nombre": "Sven",
+        "apellido": "Odinson",
+        "email": "sven1514@aol.com",
+        "edad": 47,
+        "genero": "Masculino"
+    },
+    "mario": {
+        "contrasena": "hjkl",
+        "nombre": "Mario",
+        "apellido": "Perez",
+        "email": "marius@mail.com",
+        "edad": 68,
+        "genero": "Masculino"
+    }
+}
