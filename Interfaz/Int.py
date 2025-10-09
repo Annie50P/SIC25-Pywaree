@@ -118,6 +118,7 @@ tk.Label(contenedor_formulario, text="Contraseña", bg="white").pack(pady=(10, 5
 entry_contrasena = tk.Entry(contenedor_formulario, show="*", width=30)
 entry_contrasena.pack()
 
+
 def verificar_credenciales():
     global usuario_actual
     usuario = entry_usuario.get()
