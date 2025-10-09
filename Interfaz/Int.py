@@ -1,12 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import ttk 
+import datetime # <--- NUEVA IMPORTACIÓN
 
 # Variable global para almacenar el nombre de usuario
 usuario_actual = ""
 
-# --- ALMACENAMIENTO DE DATOS ---
-# Usaremos un diccionario simple para simular una base de datos de usuarios
-# Clave: nombre_usuario, Valor: {contrasena, nombre, apellido, email, edad, genero}
+# --- ALMACENAMIENTO DE DATOS (Se mantiene igual) ---
 USUARIOS_REGISTRADOS = {
     "andres": {
         "contrasena": "1234",
@@ -35,8 +35,30 @@ USUARIOS_REGISTRADOS = {
 }
 # ------------------------------
 
+# --- FUNCIÓN DE TRADUCCIÓN PARA LA FECHA ---
+def obtener_fecha_actual_espanol():
+    """Retorna la fecha actual formateada en español."""
+    now = datetime.datetime.now()
+    
+    # Mapeo de días y meses de inglés a español
+    dias_es = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    meses_es = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ]
+    
+    # Obtener el día de la semana (0=Lunes, 6=Domingo) y el mes (1=Enero, 12=Diciembre)
+    dia_semana = dias_es[now.weekday()]
+    mes = meses_es[now.month - 1]
+    
+    # Formato deseado: "Día 04 de Mes, 2025"
+    fecha_formateada = f"{dia_semana} {now.day} de {mes}, {now.year}"
+    return fecha_formateada
+# -------------------------------------------
+
+
 # -------------------------------------------------------------------
-# FUNCIÓN CLAVE: Cerrar sesión y volver al login
+# FUNCIÓN CLAVE: Cerrar sesión y volver al login (Se mantiene igual)
 # -------------------------------------------------------------------
 
 def cerrar_sesion(ventana_actual):
@@ -47,13 +69,212 @@ def cerrar_sesion(ventana_actual):
     abrir_ventana_login()
 
 # -------------------------------------------------------------------
+# FUNCIÓN CLAVE: CONTENIDO DEL REGISTRO DIARIO CON SCROLLBAR (FECHA CORREGIDA)
+# -------------------------------------------------------------------
+
+def mostrar_registro_diario(panel_contenedor):
+    """Crea y muestra el formulario de Registro Diario en el panel derecho CON SCROLLBAR."""
+    
+    for widget in panel_contenedor.winfo_children():
+        widget.destroy()
+
+    # --- OBTENER LA FECHA ACTUAL ---
+    fecha_hoy = obtener_fecha_actual_espanol() # <--- ¡CORRECCIÓN AQUÍ!
+    # -------------------------------
+    
+    # --- 1. CONFIGURACIÓN DEL SCROLL ---
+    canvas = tk.Canvas(panel_contenedor, bg="white")
+    scrollbar = ttk.Scrollbar(panel_contenedor, orient="vertical", command=canvas.yview)
+    
+    scrollbar.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+
+    canvas.configure(yscrollcommand=scrollbar.set)
+    
+    # Frame que contendrá todo el contenido y que se desplazará
+    scrollable_frame = tk.Frame(canvas, bg="white")
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    
+    # Función para ajustar el scroll y el ancho del frame
+    def on_frame_configure(event):
+        # 1. Ajustar la scrollregion al tamaño total del frame (para el desplazamiento vertical)
+        canvas.configure(scrollregion=canvas.bbox("all"))
+        # 2. Forzar el ancho del frame interno a coincidir con el ancho del canvas
+        canvas_width = event.width
+        canvas.itemconfig(canvas.itemcget(tk.ALL, 'window'), width=canvas_width)
+
+    scrollable_frame.bind("<Configure>", on_frame_configure)
+    
+    def on_canvas_resize(event):
+        canvas.itemconfigure(canvas.itemcget(tk.ALL, 'window'), width=event.width)
+    
+    canvas.bind('<Configure>', on_canvas_resize)
+    
+    # --- SIMULACIÓN DE WIDGETS Y VARIABLES ---
+    
+    # Etiqueta de la fecha usando la variable dinámica
+    tk.Label(scrollable_frame, text=f"Registro de Hoy - {fecha_hoy}", 
+             font=("Arial", 16, "bold"), fg="#4B0082", bg="white").pack(pady=20, padx=20, anchor="w")
+
+    opciones_0_5 = [str(i) for i in range(6)]
+    rigidez_var = tk.StringVar(value="0")
+    dolor_var = tk.StringVar(value="0")
+    inflamacion_var = tk.StringVar(value="0")
+    fatiga_var = tk.StringVar(value="0")
+    
+    estado_animo_var = tk.StringVar(value="-- Seleccionar --")
+    actividad_fisica_var = tk.StringVar(value="-- Seleccionar --") 
+    calidad_sueno_var = tk.StringVar(value="-- Seleccionar --") 
+    tipo_dieta_var = tk.StringVar(value="-- Seleccionar --")
+    consume_alcohol_var = tk.StringVar(value="-- Seleccionar --") 
+    tomo_medicacion_var = tk.StringVar(value="-- Seleccionar --") 
+    
+    gluten_var = tk.BooleanVar()
+    lacteos_var = tk.BooleanVar()
+    azucares_var = tk.BooleanVar()
+    procesados_var = tk.BooleanVar()
+    carnes_rojas_var = tk.BooleanVar()
+    frituras_var = tk.BooleanVar()
+    
+    
+    # --- Estructura del Formulario (Usando Frame y Grid, ANCLADO AL SCROLLABLE_FRAME) ---
+    
+    formulario = tk.Frame(scrollable_frame, bg="white", padx=20, pady=10)
+    formulario.pack(fill="x", padx=20)
+    
+    fila_actual = 0
+    
+    # ------------------ SECCIÓN SÍNTOMAS ------------------
+    
+    tk.Label(formulario, text="📌 Síntomas", font=("Arial", 12, "bold"), bg="white", fg="#1976D2").grid(row=fila_actual, column=0, columnspan=3, sticky="w", pady=(10, 5))
+    fila_actual += 1
+
+    # Columna 1: Rigidez Matutina
+    tk.Label(formulario, text="Rigidez Matutina (0-5)", bg="white").grid(row=fila_actual, column=0, sticky="w")
+    ttk.Combobox(formulario, textvariable=rigidez_var, values=opciones_0_5, state="readonly", width=12).grid(row=fila_actual + 1, column=0, padx=10, sticky="w")
+    tk.Label(formulario, text="0 = Sin rigidez; 5 = Rigidez severa", font=("Arial", 8), fg="gray", bg="white").grid(row=fila_actual + 2, column=0, sticky="w")
+    
+    # Columna 2: Dolor Articular
+    tk.Label(formulario, text="Dolor Articular (0-5)", bg="white").grid(row=fila_actual, column=1, sticky="w", padx=40)
+    ttk.Combobox(formulario, textvariable=dolor_var, values=opciones_0_5, state="readonly", width=12).grid(row=fila_actual + 1, column=1, padx=40, sticky="w")
+    tk.Label(formulario, text="0 = Sin dolor; 5 = Dolor severo", font=("Arial", 8), fg="gray", bg="white").grid(row=fila_actual + 2, column=1, sticky="w", padx=40)
+    
+    # Columna 3: Inflamación Articular
+    tk.Label(formulario, text="Inflamación Articular (0-5)", bg="white").grid(row=fila_actual, column=2, sticky="w", padx=40)
+    ttk.Combobox(formulario, textvariable=inflamacion_var, values=opciones_0_5, state="readonly", width=12).grid(row=fila_actual + 1, column=2, padx=40, sticky="w")
+    tk.Label(formulario, text="0 = Sin inflamación; 5 = Inflamación severa", font=("Arial", 8), fg="gray", bg="white").grid(row=fila_actual + 2, column=2, sticky="w", padx=40)
+    
+    fila_actual += 3
+    
+    # Fatiga Crónica 
+    tk.Label(formulario, text="Fatiga Crónica (0-5)", bg="white").grid(row=fila_actual, column=0, sticky="w", pady=(10, 0))
+    ttk.Combobox(formulario, textvariable=fatiga_var, values=opciones_0_5, state="readonly", width=12).grid(row=fila_actual + 1, column=0, padx=10, sticky="w")
+    tk.Label(formulario, text="0 = Sin fatiga; 5 = Fatiga extrema", font=("Arial", 8), fg="gray", bg="white").grid(row=fila_actual + 2, column=0, sticky="w")
+    
+    fila_actual += 3
+    
+    # ------------------ SECCIÓN ESTADO EMOCIONAL ------------------
+    
+    tk.Label(formulario, text="🧠 Estado Emocional", font=("Arial", 12, "bold"), bg="white", fg="#1976D2").grid(row=fila_actual, column=0, columnspan=3, sticky="w", pady=(20, 5))
+    fila_actual += 1
+    
+    tk.Label(formulario, text="Estado de Ánimo", bg="white").grid(row=fila_actual, column=0, sticky="w")
+    estados_animo = ["Feliz", "Neutral", "Triste", "Ansioso", "Irritable"]
+    ttk.Combobox(formulario, textvariable=estado_animo_var, values=estados_animo, state="readonly", width=20).grid(row=fila_actual + 1, column=0, sticky="w", padx=10)
+    tk.Label(formulario, text="Escala 1-5 según intensidad emocional", font=("Arial", 8), fg="gray", bg="white").grid(row=fila_actual + 2, column=0, sticky="w")
+    
+    fila_actual += 3
+
+    # ------------------ SECCIÓN ACTIVIDAD FÍSICA Y SUEÑO ------------------
+    
+    tk.Label(formulario, text="🏃 Actividad Física y Sueño", font=("Arial", 12, "bold"), bg="white", fg="#1976D2").grid(row=fila_actual, column=0, columnspan=3, sticky="w", pady=(20, 5))
+    fila_actual += 1
+
+    # Columna 1: Actividad Física
+    tk.Label(formulario, text="¿Realizaste Actividad Física?", bg="white").grid(row=fila_actual, column=0, sticky="w")
+    opciones_si_no = ["Sí", "No"]
+    ttk.Combobox(formulario, textvariable=actividad_fisica_var, values=opciones_si_no, state="readonly", width=20).grid(row=fila_actual + 1, column=0, sticky="w", padx=10)
+    
+    # Columna 2: Calidad del Sueño
+    tk.Label(formulario, text="Calidad del Sueño", bg="white").grid(row=fila_actual, column=1, sticky="w", padx=40)
+    opciones_calidad = ["Excelente (5)", "Buena (4)", "Regular (3)", "Mala (2)", "Pésima (1)"]
+    ttk.Combobox(formulario, textvariable=calidad_sueno_var, values=opciones_calidad, state="readonly", width=20).grid(row=fila_actual + 1, column=1, sticky="w", padx=40)
+    tk.Label(formulario, text="Escala 1-5", font=("Arial", 8), fg="gray", bg="white").grid(row=fila_actual + 2, column=1, sticky="w", padx=40)
+
+    fila_actual += 3
+
+    # ------------------ SECCIÓN NUTRICIÓN Y DIETA ------------------
+    
+    tk.Label(formulario, text="🍽️ Nutrición y Dieta", font=("Arial", 12, "bold"), bg="white", fg="#4B0082").grid(row=fila_actual, column=0, columnspan=3, sticky="w", pady=(20, 5))
+    fila_actual += 1
+
+    # Columna 1: Tipo de Dieta
+    tk.Label(formulario, text="Tipo de Dieta", bg="white").grid(row=fila_actual, column=0, sticky="w")
+    opciones_dieta = ["Cetogénica", "Mediterránea", "Vegetariana", "Estándar"]
+    ttk.Combobox(formulario, textvariable=tipo_dieta_var, values=opciones_dieta, state="readonly", width=20).grid(row=fila_actual + 1, column=0, sticky="w", padx=10)
+    
+    # Columna 2: Consumo de Alcohol
+    tk.Label(formulario, text="¿Consumiste Alcohol?", bg="white").grid(row=fila_actual, column=1, sticky="w", padx=40)
+    opciones_si_no_alcohol = ["Sí", "No"]
+    ttk.Combobox(formulario, textvariable=consume_alcohol_var, values=opciones_si_no_alcohol, state="readonly", width=20).grid(row=fila_actual + 1, column=1, sticky="w", padx=40)
+    
+    fila_actual += 3
+
+    # Alimentos Consumidos (Checkboxes)
+    tk.Label(formulario, text="Alimentos Consumidos (Selecciona todos los que apliquen)", font=("Arial", 10, "bold"), bg="white").grid(row=fila_actual, column=0, columnspan=3, sticky="w", pady=(10, 5))
+    fila_actual += 1
+    
+    # Frame para los Checkboxes en una sola fila
+    checkbox_frame = tk.Frame(formulario, bg="white")
+    checkbox_frame.grid(row=fila_actual, column=0, columnspan=3, sticky="w", pady=5)
+
+    tk.Checkbutton(checkbox_frame, text="Gluten", variable=gluten_var, bg="white").pack(side="left", padx=5)
+    tk.Checkbutton(checkbox_frame, text="Lácteos", variable=lacteos_var, bg="white").pack(side="left", padx=5)
+    tk.Checkbutton(checkbox_frame, text="Azúcares", variable=azucares_var, bg="white").pack(side="left", padx=5)
+    tk.Checkbutton(checkbox_frame, text="Procesados", variable=procesados_var, bg="white").pack(side="left", padx=5)
+    tk.Checkbutton(checkbox_frame, text="Carnes Rojas", variable=carnes_rojas_var, bg="white").pack(side="left", padx=5)
+    tk.Checkbutton(checkbox_frame, text="Frituras", variable=frituras_var, bg="white").pack(side="left", padx=5)
+    
+    tk.Label(formulario, text="Estos datos se convertirán en columnas binarias para análisis", font=("Arial", 8), fg="gray", bg="white").grid(row=fila_actual + 1, column=0, columnspan=3, sticky="w")
+    
+    fila_actual += 2
+    
+    # ------------------ SECCIÓN MEDICACIÓN ------------------
+
+    tk.Label(formulario, text="💊 Medicación", font=("Arial", 12, "bold"), bg="white", fg="#4B0082").grid(row=fila_actual, column=0, columnspan=3, sticky="w", pady=(20, 5))
+    fila_actual += 1
+    
+    tk.Label(formulario, text="¿Tomaste tu Medicación?", bg="white").grid(row=fila_actual, column=0, sticky="w")
+    ttk.Combobox(formulario, textvariable=tomo_medicacion_var, values=opciones_si_no, state="readonly", width=20).grid(row=fila_actual + 1, column=0, sticky="w", padx=10)
+    
+    # ------------------ BOTÓN GUARDAR (anclado al scrollable_frame) ------------------
+    
+    def validar_y_guardar_registro():
+        
+        campos_obligatorios = [
+            rigidez_var.get(), dolor_var.get(), inflamacion_var.get(), fatiga_var.get(), 
+            estado_animo_var.get(), actividad_fisica_var.get(), calidad_sueno_var.get(), 
+            tipo_dieta_var.get(), consume_alcohol_var.get(), tomo_medicacion_var.get()
+        ]
+        
+        if "-- Seleccionar --" in campos_obligatorios:
+            messagebox.showerror("Error de Registro", "Por favor, complete todos los campos de selección obligatorios.", parent=panel_contenedor)
+            return
+            
+        messagebox.showinfo("Registro Guardado", "El Registro Diario ha sido guardado correctamente para análisis.", parent=panel_contenedor)
+
+    tk.Button(scrollable_frame, text="💾 Guardar Registro Diario", bg="#4B0082", fg="white",
+              font=("Arial", 12, "bold"), width=30, command=validar_y_guardar_registro).pack(pady=40)
+    
+# -------------------------------------------------------------------
+
 
 # Función para abrir la interfaz principal
 def abrir_ventana_principal():
     ventana_principal = tk.Tk()
     ventana_principal.title("MAC - Panel Principal")
     ventana_principal.geometry("1000x500")
-    ventana_principal.resizable(False, False)
+    ventana_principal.resizable(True, True) 
 
     # Encabezado superior con fondo dark violet
     encabezado = tk.Frame(ventana_principal, height=50, bg="dark violet")
@@ -66,97 +287,113 @@ def abrir_ventana_principal():
     contenedor_usuario = tk.Frame(encabezado, bg="dark violet")
     contenedor_usuario.pack(side="right", padx=10)
     
-    # Nombre de usuario
     tk.Label(contenedor_usuario, text=usuario_actual, font=("Arial", 12),
              bg="dark violet", fg="white").pack(side="left", padx=10)
 
-    # BOTÓN DE CERRAR SESIÓN
     btn_cerrar_sesion = tk.Button(contenedor_usuario, text="Cerrar Sesión 🚪", 
                                   bg="#DC3545", fg="white", 
                                   font=("Arial", 10), cursor="hand2",
                                   command=lambda: cerrar_sesion(ventana_principal))
     btn_cerrar_sesion.pack(side="left", padx=10)
 
-
     # Menú lateral izquierdo
     menu_lateral = tk.Frame(ventana_principal, width=200, bg="white")
     menu_lateral.pack(side="left", fill="y")
-    # Línea divisoria
     linea_divisoria = tk.Frame(ventana_principal, width=1, bg="#CCCCCC")
     linea_divisoria.pack(side="left", fill="y")
 
-    opciones_menu = [
-        "Dashboard General",
-        "RFC1: Registro Diario",
-        "RFC2: Análisis Estadístico",
-        "RFC4: Visualizaciones",
-        "RFC4: Simulación Dataset",
-        "Mi Perfil"
-    ]
+    # Panel principal derecho (Contenedor de Contenido)
+    panel_derecho = tk.Frame(ventana_principal, bg="white")
+    panel_derecho.pack(side="right", expand=True, fill="both")
+    
+    # Definir las opciones y la función a ejecutar
+    opciones_menu_map = {
+        "Dashboard General": lambda: mostrar_panel_vacio(panel_derecho, "Dashboard General"),
+        "RFC1: Registro Diario": lambda: mostrar_registro_diario(panel_derecho),
+        "RFC2: Análisis Estadístico": lambda: mostrar_panel_vacio(panel_derecho, "Análisis Estadístico"),
+        "RFC4: Visualizaciones": lambda: mostrar_panel_vacio(panel_derecho, "Visualizaciones"),
+        "RFC4: Simulación Dataset": lambda: mostrar_panel_vacio(panel_derecho, "Simulación Dataset"),
+        "Mi Perfil": lambda: mostrar_perfil(panel_derecho),
+    }
+
+    def mostrar_panel_vacio(panel_contenedor, titulo):
+        """Función temporal para limpiar y mostrar un título en el panel."""
+        for widget in panel_contenedor.winfo_children():
+            widget.destroy()
+        tk.Label(panel_contenedor, text=f"Contenido de {titulo} (Próxima Implementación)", 
+                 font=("Arial", 18), fg="gray", bg="white").pack(expand=True)
+    
+    def mostrar_perfil(panel_contenedor):
+        """Crea y muestra el formulario de perfil."""
+        for widget in panel_contenedor.winfo_children():
+            widget.destroy()
+            
+        contenedor_perfil = tk.Frame(panel_contenedor, bg="white")
+        contenedor_perfil.place(relx=0.5, rely=0.1, anchor="n")
+
+        tk.Label(contenedor_perfil, text="Información del Paciente", font=("Arial", 14, "bold"), bg="white").pack(pady=10)
+
+        info_usuario = USUARIOS_REGISTRADOS.get(usuario_actual, {})
+        nombre_completo = f"{info_usuario.get('nombre', '')} {info_usuario.get('apellido', '')}"
+
+        formulario = tk.Frame(contenedor_perfil, bg="white")
+        formulario.pack()
+
+        campos = [
+            ("Nombre Completo:", nombre_completo.strip() if nombre_completo.strip() else "Usuario sin nombre"),
+            ("Nombre de Usuario:", usuario_actual),
+            ("Email:", info_usuario.get('email', 'No registrado')),
+            ("Edad:", info_usuario.get('edad', 'No registrado')),
+            ("Género:", info_usuario.get('genero', 'No registrado')),
+            ("Fecha de Diagnóstico:", ""), 
+            ("Reumatólogo:", "Dr. Juan Pérez"),
+        ]
+
+        entradas = {}
+        for i, (etiqueta, valor) in enumerate(campos):
+            tk.Label(formulario, text=etiqueta, bg="white", anchor="e", width=20).grid(row=i, column=0, padx=5, pady=5)
+            entrada = tk.Entry(formulario, width=40)
+            entrada.insert(0, valor)
+            
+            if etiqueta not in ("Fecha de Diagnóstico:", "Reumatólogo:"):
+                 entrada.config(state='readonly') 
+
+            entrada.grid(row=i, column=1, padx=5, pady=5)
+            entradas[etiqueta] = entrada
+
+        def actualizar_info():
+            messagebox.showinfo("Actualización", "Información actualizada correctamente.", parent=panel_contenedor)
+
+        tk.Button(contenedor_perfil, text="Actualizar Información", bg="#1976D2", fg="white",
+                  font=("Arial", 10), width=25, command=actualizar_info).pack(pady=20)
+
 
     def resaltar(event):
         event.widget.config(bg="#E0E0E0")
 
     def restaurar(event):
         event.widget.config(bg="white")
+        
+    def seleccionar_opcion(event, opcion):
+        # Ejecuta la función asociada a la opción seleccionada
+        opciones_menu_map[opcion]()
 
-    for opcion in opciones_menu:
+    for opcion in opciones_menu_map.keys():
         btn = tk.Label(menu_lateral, text=opcion, bg="white", fg="black",
                        font=("Arial", 10), anchor="w", padx=10)
         btn.pack(fill="x", pady=2)
         btn.bind("<Enter>", resaltar)
         btn.bind("<Leave>", restaurar)
-
-    # Panel principal derecho (Muestra 'Mi Perfil' por defecto)
-    panel_derecho = tk.Frame(ventana_principal, bg="white")
-    panel_derecho.pack(side="right", expand=True, fill="both")
-
-    contenedor_perfil = tk.Frame(panel_derecho, bg="white")
-    contenedor_perfil.place(relx=0.5, rely=0.1, anchor="n")
-
-    tk.Label(contenedor_perfil, text="Información del Paciente", font=("Arial", 14, "bold"), bg="white").pack(pady=10)
-
-    # Formulario de Perfil (usando datos del usuario actual)
-    info_usuario = USUARIOS_REGISTRADOS.get(usuario_actual, {})
-    nombre_completo = f"{info_usuario.get('nombre', '')} {info_usuario.get('apellido', '')}"
-
-    formulario = tk.Frame(contenedor_perfil, bg="white")
-    formulario.pack()
-
-    campos = [
-        ("Nombre Completo:", nombre_completo.strip() if nombre_completo.strip() else "Usuario sin nombre"),
-        ("Nombre de Usuario:", usuario_actual),
-        ("Email:", info_usuario.get('email', 'No registrado')),
-        ("Edad:", info_usuario.get('edad', 'No registrado')),
-        ("Género:", info_usuario.get('genero', 'No registrado')),
-        ("Fecha de Diagnóstico:", ""), 
-        ("Reumatólogo:", "Dr. Juan Pérez"),
-    ]
-
-    entradas = {}
-    for i, (etiqueta, valor) in enumerate(campos):
-        tk.Label(formulario, text=etiqueta, bg="white", anchor="e", width=20).grid(row=i, column=0, padx=5, pady=5)
-        entrada = tk.Entry(formulario, width=40)
-        entrada.insert(0, valor)
-        
-        if etiqueta not in ("Fecha de Diagnóstico:", "Reumatólogo:"):
-             entrada.config(state='readonly') 
-
-        entrada.grid(row=i, column=1, padx=5, pady=5)
-        entradas[etiqueta] = entrada
-
-    def actualizar_info():
-        messagebox.showinfo("Actualización", "Información actualizada correctamente.")
-
-    tk.Button(contenedor_perfil, text="Actualizar Información", bg="#1976D2", fg="white",
-              font=("Arial", 10), width=25, command=actualizar_info).pack(pady=20)
-
+        btn.bind("<Button-1>", lambda event, o=opcion: seleccionar_opcion(event, o))
+    
+    mostrar_registro_diario(panel_derecho)
+    
     ventana_principal.mainloop()
 
-# --- FUNCIONALIDAD DE REGISTRO ---
+# --- FUNCIÓN DE REGISTRO CON SCROLLBAR IMPLEMENTADA (Se mantiene igual) ---
 
 def abrir_ventana_registro(ventana_padre, entry_usuario, entry_contrasena):
-    """Muestra la ventana modal de registro."""
+    """Muestra la ventana modal de registro con una barra de desplazamiento."""
     
     ventana_registro = tk.Toplevel(ventana_padre)
     ventana_registro.title("MAC - Registrar Nuevo Usuario")
@@ -168,9 +405,28 @@ def abrir_ventana_registro(ventana_padre, entry_usuario, entry_contrasena):
     tk.Label(ventana_registro, text="Complete sus Datos de Registro", 
              font=("Arial", 14, "bold"), pady=10).pack()
 
-    form_registro = tk.Frame(ventana_registro, padx=10, pady=10)
-    form_registro.pack()
+    # 1. Crear el Canvas (Lienzo)
+    canvas = tk.Canvas(ventana_registro)
+    canvas.pack(side="left", fill="both", expand=True)
 
+    # 2. Crear la Barra de Desplazamiento
+    scrollbar = ttk.Scrollbar(ventana_registro, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+
+    # 3. Configurar el Canvas para que use la Scrollbar
+    canvas.configure(yscrollcommand=scrollbar.set)
+    # Evento para reajustar el área de desplazamiento cuando cambia el tamaño del contenido
+    canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion = canvas.bbox("all")))
+
+    # 4. Crear un Frame interior (form_registro) donde irá todo el contenido
+    # Este Frame es el que se moverá dentro del Canvas
+    form_registro = tk.Frame(canvas, padx=10, pady=10)
+    
+    # 5. Añadir el Frame interior al Canvas
+    canvas.create_window((0, 0), window=form_registro, anchor="nw")
+
+    # --- Contenido del Formulario (Añadido al form_registro) ---
+    
     entradas = {}
     
     campos_registro = [
@@ -184,15 +440,14 @@ def abrir_ventana_registro(ventana_padre, entry_usuario, entry_contrasena):
     ]
     
     genero_var = tk.StringVar(ventana_registro)
-    genero_var.set("No Especificado")
+    genero_var.set("-- Seleccionar --") 
     
     for i, (etiqueta_texto, clave) in enumerate(campos_registro):
         tk.Label(form_registro, text=etiqueta_texto, anchor="w", width=20).grid(row=i, column=0, padx=5, pady=5)
         
         if clave == "genero":
             opciones_genero = ["Femenino", "Masculino", "Otro", "No Especificado"]
-            entrada = tk.OptionMenu(form_registro, genero_var, *opciones_genero)
-            entrada.config(width=25)
+            entrada = ttk.Combobox(form_registro, textvariable=genero_var, values=opciones_genero, state="readonly", width=25)
         else:
             entrada = tk.Entry(form_registro, width=30)
             if clave == "contrasena":
@@ -202,7 +457,7 @@ def abrir_ventana_registro(ventana_padre, entry_usuario, entry_contrasena):
         entradas[clave] = entrada
 
     def guardar_registro():
-        """Valida y guarda los datos, luego intenta iniciar sesión."""
+        """Valida **todos** los campos y guarda el usuario."""
         
         datos = {
             "usuario": entradas["usuario"].get().strip(),
@@ -214,16 +469,18 @@ def abrir_ventana_registro(ventana_padre, entry_usuario, entry_contrasena):
             "genero": genero_var.get()
         }
         
-        # --- Validación de datos ---
-        if any(not datos[k] for k in ["usuario", "contrasena", "nombre", "apellido", "email", "edad"]):
+        # --- Validación de Campos Vacíos ---
+        campos_a_revisar = ["usuario", "contrasena", "nombre", "apellido", "email", "edad"]
+        if any(not datos[k] for k in campos_a_revisar) or datos["genero"] == "-- Seleccionar --":
             messagebox.showerror("Error de Registro", "Por favor, complete todos los campos obligatorios.", parent=ventana_registro)
             return
         
+        # --- Validación de Existencia y Formato ---
         if datos["usuario"] in USUARIOS_REGISTRADOS:
             messagebox.showerror("Error de Registro", "El nombre de usuario ya existe.", parent=ventana_registro)
             return
 
-        if not datos["email"].__contains__("@") or not datos["email"].__contains__("."):
+        if not "@" in datos["email"] or not "." in datos["email"]:
              messagebox.showerror("Error de Registro", "Ingrese un email válido.", parent=ventana_registro)
              return
              
@@ -254,30 +511,27 @@ def abrir_ventana_registro(ventana_padre, entry_usuario, entry_contrasena):
         entry_contrasena.insert(0, datos["contrasena"])
 
 
-    tk.Button(ventana_registro, text="Registrar y Volver", bg="#4CAF50", fg="white", width=25, 
-              font=("Arial", 10, "bold"), command=guardar_registro).pack(pady=20)
+    btn_guardar = tk.Button(form_registro, text="Registrar y Volver", bg="#4CAF50", fg="white", width=25, 
+              font=("Arial", 10, "bold"), command=guardar_registro)
+    
+    # Colocar el botón dentro del frame interior
+    btn_guardar.grid(row=len(campos_registro), column=0, columnspan=2, pady=20)
 
-
-# -------------------------------------------------------------------
-# FUNCIÓN CLAVE: Abre la ventana de login (se llama al iniciar y al cerrar sesión)
-# -------------------------------------------------------------------
 
 def abrir_ventana_login():
     """Crea y muestra la ventana de inicio de sesión."""
     
-    # Usar Toplevel si ya existe una ventana raíz, o Tk() si no (como en este caso al inicio)
     global ventana_login
     try:
         ventana_login.destroy()
     except:
-        pass # Ignorar si no existe
+        pass
         
     ventana_login = tk.Tk()
     ventana_login.title("MAC - Iniciar Sesión")
     ventana_login.geometry("800x400")
     ventana_login.resizable(False, False)
 
-    # Marco izquierdo (Diseño)
     frame_izquierdo = tk.Frame(ventana_login, width=400, height=400, bg="dark violet")
     frame_izquierdo.pack(side="left", fill="both")
 
@@ -285,7 +539,6 @@ def abrir_ventana_login():
                           font=("Arial", 16), bg="dark violet", fg="white", justify="center")
     label_info.place(relx=0.5, rely=0.5, anchor="center")
 
-    # Marco derecho (Formulario de Login)
     frame_derecho = tk.Frame(ventana_login, width=400, height=400, bg="white")
     frame_derecho.pack(side="right", fill="both")
 
